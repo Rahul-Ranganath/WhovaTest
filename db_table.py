@@ -48,7 +48,7 @@ class db_table:
     #
     def create_table(self):
         # { "id": "integer", "name": "text" } -> "id integer, name text"
-        columns_query_string = ', '.join([ "%s %s" % (k,v) for k,v in self.schema.iteritems() ])
+        columns_query_string = ', '.join([ "%s %s" % (k,v) for k,v in self.schema.items() ])
 
         # CREATE TABLE IF NOT EXISTS users (id integer PRIMARY KEY, name text)
         #
@@ -112,7 +112,8 @@ class db_table:
     def insert(self, item):
         # build columns & values queries
         columns_query = ", ".join(item.keys())
-        values_query  = ", ".join([ "'%s'" % v for v in item.values()])
+        #values_query  = ", ".join([ "'%s'" % v for v in item.values()])
+        values_query  = ", ".join([ ":" + k for k in item.keys() ])
         #print(len(item.values()))
         #print(item["Speakers"])
         # INSERT INTO users(id, name) values (42, John)
@@ -121,7 +122,8 @@ class db_table:
         # The reason is that sqlite does not provide substitution mechanism for columns parameters
         # In the context of this project, this is fine (no risk of user malicious input)
         cursor = self.db_conn.cursor()
-        cursor.execute("INSERT INTO %s (%s) VALUES (%s)" % (self.name, columns_query, values_query))
+        #cursor.execute("INSERT INTO %s (%s) VALUES (%s)" % (self.name, columns_query, values_query))
+        cursor.execute("INSERT INTO %s (%s) VALUES (%s)" % (self.name, columns_query, values_query), item)
         cursor.close()
         self.db_conn.commit()
         return cursor.lastrowid
@@ -153,6 +155,10 @@ class db_table:
         self.db_conn.commit()
         return cursor.rowcount
 
+    def select_all(self):
+        query = "SELECT * FROM %s" % self.name
+        result = self.db_conn.execute(query).fetchall()
+        return result
     #
     # Close the database connection
     #
