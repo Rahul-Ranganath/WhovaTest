@@ -11,7 +11,8 @@ agenda_table_schema = {
     "session_title": "text",
     "location": "text",
     "description": "text",
-    "speakers": "text"
+    "speakers": "text",
+    "parent_session_id": "integer"
 }
 
 def parse_excel(filename):
@@ -20,7 +21,6 @@ def parse_excel(filename):
 
     agendas = []
     current_session = None
-
     # Start parsing from row 16
     for row_idx in range(15, sheet.nrows):
         row = sheet.row_values(row_idx)
@@ -57,7 +57,6 @@ def parse_excel(filename):
 def import_agenda_to_db(agendas):
     # Initialize the database table
     agenda_table = db_table("agendas", agenda_table_schema)
-
     for agenda in agendas:
         # Insert session into the database
         session_id = agenda_table.insert({
@@ -68,7 +67,8 @@ def import_agenda_to_db(agendas):
             "session_title": agenda["session_title"],
             "location": agenda["location"],
             "description": agenda["description"],
-            "speakers": agenda["speakers"]
+            "speakers": agenda["speakers"],
+            "parent_session_id": None
         })
 
         # Insert sub-sessions under the session
@@ -82,16 +82,17 @@ def import_agenda_to_db(agendas):
                     "session_title": sub_session["session_title"],
                     "location": sub_session["location"],
                     "description": sub_session["description"],
-                    "speakers": sub_session["speakers"]
+                    "speakers": sub_session["speakers"],
+                    "parent_session_id": session_id
                 })
-    
+    #agenda_table.remove_duplicates()
     # Testing if data is inserted
-    print("Data in the database:")
-    rows = agenda_table.select_all()
-    for row in rows:
-        print(row)
-    # Close the database connection
-    agenda_table.close()
+    # print("Data in the database:")
+    # rows = agenda_table.select_all()
+    # for row in rows:
+    #     print(row)
+    # # Close the database connection
+    # agenda_table.close()
 
 if __name__ == "__main__":
     import sys

@@ -46,16 +46,18 @@ class db_table:
     # If table already exists, nothing is done even if the schema has changed
     # If you need to apply schema changes, please delete the database file
     #
-    def create_table(self):
+    def create_table(self, unique_constraint=""):
         # { "id": "integer", "name": "text" } -> "id integer, name text"
         columns_query_string = ', '.join([ "%s %s" % (k,v) for k,v in self.schema.items() ])
-
+        #query = f"CREATE TABLE IF NOT EXISTS {self.name} ({', '.join([f'{k} {v}' for k, v in self.schema.items()])})"
+        #query = "CREATE TABLE IF NOT EXISTS {} ({})".format(self.name, ', '.join([f'{k} {v}' for k, v in self.schema.items()]))
         # CREATE TABLE IF NOT EXISTS users (id integer PRIMARY KEY, name text)
         #
         # Note that columns are formatted into the string without using sqlite safe substitution mechanism
         # The reason is that sqlite does not provide substitution mechanism for columns parameters
         # In the context of this project, this is fine (no risk of user malicious input)
         self.db_conn.execute("CREATE TABLE IF NOT EXISTS %s (%s)" % (self.name, columns_query_string))
+        #self.db_conn.execute(query)
         self.db_conn.commit()
 
     #
@@ -127,6 +129,12 @@ class db_table:
         cursor.close()
         self.db_conn.commit()
         return cursor.lastrowid
+
+    # def remove_duplicates(self):
+    #     # Remove duplicates based on the composite key (date, time_start, time_end, location)
+    #     query = f"DELETE FROM {self.name} WHERE ROWID NOT IN (SELECT MIN(ROWID) FROM {self.name} GROUP BY date, time_start, time_end, location);"
+    #     self.db_conn.execute(query)
+    #     self.db_conn.commit()
 
     #
     # UPDATE wrapper
